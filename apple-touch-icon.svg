@@ -1,0 +1,37 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Dark Grey Gradient Backing -->
+        <linearGradient id="bgGradient" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#27272a" /> <!-- Charcoal 700 -->
+            <stop offset="100%" stop-color="#050505" /> <!-- Charcoal 950 -->
+        </linearGradient>
+        
+        <!-- Disco Ball Prism Gradient -->
+        <linearGradient id="prismGrad" x1="30" y1="30" x2="150" y2="150" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2dd4bf" /> <!-- Turquoise -->
+            <stop offset="40%" stop-color="#6366f1" /> <!-- Slate Blue -->
+            <stop offset="80%" stop-color="#a78bfa" /> <!-- Purple -->
+            <stop offset="100%" stop-color="#2dd4bf" />
+        </linearGradient>
+    </defs>
+
+    <!-- Background Container -->
+    <rect width="180" height="180" fill="url(#bgGradient)"/>
+    
+    <!-- Disco Ball (Centered & Scaled) -->
+    <g transform="translate(30, 30) scale(5)"> 
+        <!-- Original size was 24, scaling 5x to fit 120px space inside 180px box -->
+        
+        <!-- Ball Body -->
+        <circle cx="12" cy="12" r="10" fill="#1c1c1f" stroke="url(#prismGrad)" stroke-width="1.5"/>
+        
+        <!-- Vertical Shine Line -->
+        <path d="M12 2V22" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+        
+        <!-- Horizontal Shine Line -->
+        <path d="M2 12H22" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+        
+        <!-- The Sparkle -->
+        <circle cx="9" cy="9" r="1.5" fill="white" fill-opacity="0.9" filter="blur(0.5px)"/>
+    </g>
+</svg>
