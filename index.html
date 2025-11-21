@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DULLAH80s">
-    <meta name="theme-color" content="#09090b">
+    <meta name="theme-color" content="#1a1a1d">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,11 +20,24 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        zinc: {
-                            925: '#121215', 
-                            950: '#09090b',
+                        charcoal: {
+                            950: '#0f0f11',
+                            900: '#1a1a1d',
+                            800: '#252528',
+                            700: '#2f2f33',
+                        },
+                        glass: {
+                            surface: 'rgba(20, 20, 22, 0.85)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            highlight: 'rgba(255, 255, 255, 0.03)',
+                        },
+                        cyan: {
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            glow: 'rgba(34, 211, 238, 0.5)',
                         }
                     }
                 }
@@ -37,7 +50,7 @@
     
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         /* Mobile Optimization & Reset */
@@ -46,42 +59,64 @@
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
             font-family: 'Inter', sans-serif;
-            background-color: #09090b;
-            color: white;
+            background-color: #0f0f11;
+            color: #e5e5e5;
+            overflow: hidden; /* Prevent body scroll */
         }
         
-        /* Safe area handling for iPhone notch/home bar */
         .pt-safe-top { padding-top: env(safe-area-inset-top); }
         .pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-        /* Hide scrollbars but allow scrolling */
+        /* Hide scrollbars */
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Range Slider Styling */
+        /* Custom Range Slider */
         input[type=range] {
             -webkit-appearance: none;
             background: transparent;
         }
-        input[type=range]:focus {
-            outline: none;
-        }
+        input[type=range]:focus { outline: none; }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
+            height: 18px;
+            width: 18px;
             border-radius: 50%;
-            background: #ffffff;
+            background: #22d3ee;
+            border: 2px solid #1a1a1d;
             cursor: pointer;
-            margin-top: -6px;
-            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            margin-top: -7px;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             cursor: pointer;
-            background: #27272a;
+            background: #2f2f33;
             border-radius: 2px;
+        }
+
+        /* Pad Interactions */
+        .pad-active {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
+            transform: scale(0.98);
+        }
+
+        /* Liquid Glass Effect */
+        .liquid-glass {
+            background: rgba(15, 15, 17, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        /* Grid Alignment Helper */
+        .grid-col-width {
+            width: 6.25%; /* 100% / 16 steps */
+            min-width: 32px;
         }
     </style>
 </head>
@@ -91,7 +126,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
 
-        // --- Icon Components (SVG Map) ---
+        // --- Icon Components ---
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
                 Zap: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
@@ -105,61 +140,87 @@
                 ChevronUp: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m18 15-6-6-6 6"/></svg>,
                 ChevronDown: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>,
                 Settings: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
-                Trash2: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                Trash2: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>,
+                X: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+                Layers: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+                Repeat: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             };
             return icons[name] || null;
         };
 
-        // --- Constants ---
         const PAD_NAMES = [
             "KICK HVY", "KICK POP", "SNARE 1", "SNARE 2",
             "CLAP", "RIM", "CHAT", "OHAT",
             "TOM HI", "TOM LO", "PERC 1", "COWBELL",
             "CRASH", "LASER", "SHAKER", "VOX"
         ];
-
-        const ACTIVE_COLOR = "bg-zinc-100 text-black shadow-[0_0_15px_rgba(255,255,255,0.6)]";
-        const INACTIVE_PAD = "bg-zinc-800 border-zinc-700 text-zinc-400";
-        const STEP_ACTIVE = "bg-zinc-200 shadow-sm";
-        const STEP_INACTIVE = "bg-zinc-800 hover:bg-zinc-700";
-        const FONT_HEADERS = "font-black uppercase";
         
+        const PATTERN_KEYS = ['A', 'B', 'C', 'D'];
+
         function Dullah80sMobileStudio() {
-            // --- State ---
+            // --- UI State ---
             const [activePad, setActivePad] = useState(null);
+            const [showFx, setShowFx] = useState(false);
+            const [collapsedPads, setCollapsedPads] = useState(false);
+            
+            // --- Audio Params ---
             const [volume, setVolume] = useState(0.8);
             const [drive, setDrive] = useState(0.0);
             const [reverbLevel, setReverbLevel] = useState(0.2);
             const [pitchShift, setPitchShift] = useState(0);
-            const [showFx, setShowFx] = useState(false);
-            const [collapsedPads, setCollapsedPads] = useState(false);
 
-            // Sequencer State
+            // --- Sequencer & Patterns ---
             const [isPlaying, setIsPlaying] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
             const [bpm, setBpm] = useState(110);
-            const [sequencerGrid, setSequencerGrid] = useState(
-                Array(16).fill(null).map(() => Array(16).fill(false))
-            );
+            
+            // Patterns: Object storing 4 grids
+            const [patterns, setPatterns] = useState({
+                A: Array(16).fill(null).map(() => Array(16).fill(false)),
+                B: Array(16).fill(null).map(() => Array(16).fill(false)),
+                C: Array(16).fill(null).map(() => Array(16).fill(false)),
+                D: Array(16).fill(null).map(() => Array(16).fill(false))
+            });
+            const [activePatternId, setActivePatternId] = useState('A'); // Currently viewing/editing
+            const [playChain, setPlayChain] = useState(['A']); // Which patterns to loop
+            const [chainMode, setChainMode] = useState(false); // If true, loops A->B->C->D
+            const [playingPatternId, setPlayingPatternId] = useState('A'); // Currently audible pattern
 
-            // --- Audio Refs ---
+            // --- Counters ---
+            const [elapsedTime, setElapsedTime] = useState(0);
+            const [totalBars, setTotalBars] = useState(1);
+
+            // --- Refs ---
             const audioCtxRef = useRef(null);
             const masterGainRef = useRef(null);
             const compressorRef = useRef(null);
             const reverbNodeRef = useRef(null);
             const driveNodeRef = useRef(null);
-            const sequencerRef = useRef(sequencerGrid);
+            
+            // Logic Refs
+            const patternsRef = useRef(patterns);
+            const chainRef = useRef(playChain);
+            const chainModeRef = useRef(chainMode);
+            const activePatternIdRef = useRef(activePatternId);
+            const playingPatternIdRef = useRef(playingPatternId);
             const stepRef = useRef(0);
+            const startTimeRef = useRef(0);
 
-            useEffect(() => { sequencerRef.current = sequencerGrid; }, [sequencerGrid]);
+            // --- Sync Refs ---
+            useEffect(() => { patternsRef.current = patterns; }, [patterns]);
+            useEffect(() => { chainRef.current = playChain; }, [playChain]);
+            useEffect(() => { chainModeRef.current = chainMode; }, [chainMode]);
+            useEffect(() => { activePatternIdRef.current = activePatternId; }, [activePatternId]);
+            useEffect(() => { playingPatternIdRef.current = playingPatternId; }, [playingPatternId]);
 
-            // --- Audio Engine (Synthesis) ---
+            // --- Audio Engine ---
             const initAudio = () => {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!audioCtxRef.current) {
                     const ctx = new AudioContext();
                     audioCtxRef.current = ctx;
 
+                    // Chain: Sources -> Drive -> Reverb(Send) -> Compressor -> Master -> Out
                     const masterGain = ctx.createGain();
                     masterGain.gain.value = volume;
                     masterGainRef.current = masterGain;
@@ -175,24 +236,18 @@
 
                     const reverbGain = ctx.createGain();
                     reverbGain.gain.value = reverbLevel;
-                    // Simple impulse response for reverb
                     const convolver = ctx.createConvolver();
-                    convolver.buffer = createImpulseResponse(ctx, 1.5, 1.5);
+                    convolver.buffer = createImpulseResponse(ctx, 2.0, 2.0); // Longer tail
                     convolver.connect(reverbGain);
-                    reverbNodeRef.current = reverbGain; // Actually pointing to gain to control level
+                    reverbNodeRef.current = reverbGain;
                     
-                    // Routing: Voices -> Drive -> Compressor -> Master
-                    // Voices -> Reverb -> Compressor -> Master
+                    // Routing
                     shaper.connect(compressor);
                     reverbGain.connect(compressor);
                     compressor.connect(masterGain);
                     masterGain.connect(ctx.destination);
                 }
-                
-                // Resume if suspended (common browser policy)
-                if (audioCtxRef.current.state === 'suspended') {
-                    audioCtxRef.current.resume();
-                }
+                if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
             };
 
             const makeDistortionCurve = (amount) => {
@@ -200,8 +255,8 @@
                 const n_samples = 44100;
                 const curve = new Float32Array(n_samples);
                 for (let i = 0; i < n_samples; ++i) {
-                let x = i * 2 / n_samples - 1;
-                curve[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
+                    let x = i * 2 / n_samples - 1;
+                    curve[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
                 }
                 return curve;
             };
@@ -213,64 +268,65 @@
                 const L = impulse.getChannelData(0);
                 const R = impulse.getChannelData(1);
                 for (let i = 0; i < length; i++) {
-                const n = length - i;
-                L[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-                R[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+                    const n = length - i;
+                    L[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+                    R[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
                 }
                 return impulse;
             };
 
             useEffect(() => {
                 if (!audioCtxRef.current) return;
-                if (masterGainRef.current) masterGainRef.current.gain.setTargetAtTime(volume, audioCtxRef.current.currentTime, 0.05);
-                // Reverb logic tweak: ReverbNodeRef is the gain node
-                if (reverbNodeRef.current) reverbNodeRef.current.gain.setTargetAtTime(reverbLevel, audioCtxRef.current.currentTime, 0.05);
+                const t = audioCtxRef.current.currentTime;
+                if (masterGainRef.current) masterGainRef.current.gain.setTargetAtTime(volume, t, 0.05);
+                if (reverbNodeRef.current) reverbNodeRef.current.gain.setTargetAtTime(reverbLevel, t, 0.05);
                 if (driveNodeRef.current) driveNodeRef.current.curve = makeDistortionCurve(drive * 100);
             }, [volume, reverbLevel, drive]);
 
+            // --- Haptics Helper ---
+            const triggerHaptic = () => {
+                if (navigator.vibrate) navigator.vibrate(10); // Short pulse
+            };
+
+            // --- Sound Triggering ---
             const playSound = useCallback((index, time = null) => {
                 if (!audioCtxRef.current) initAudio();
                 const ctx = audioCtxRef.current;
                 const t = time || ctx.currentTime;
                 
-                // Per-voice gain
+                // Haptic Feedback on direct interaction or playback
+                if (!time) triggerHaptic();
+
                 const voiceOut = ctx.createGain();
                 voiceOut.gain.value = 1.0;
                 voiceOut.connect(driveNodeRef.current); 
 
-                // Send to Reverb?
                 if ([2,3,4,5,12,13,15].includes(index)) {
-                    const send = ctx.createGain();
-                    send.gain.value = 0.8; 
-                    // To connect to reverb properly we need the convolver which is implicit here
-                    // For simplicity in this single file, we reconnect via a temp logic or assume reverbNodeRef is connected
-                    // Fixing the reverb connection flow:
                     voiceOut.connect(reverbNodeRef.current);
                 }
 
                 const detune = pitchShift * 100;
 
+                // Drum Definitions (Simplified for brevity, same logic as before)
                 switch (index) {
-                case 0: playKick(ctx, voiceOut, t, 55, 0.4, detune); break;
-                case 1: playKick(ctx, voiceOut, t, 75, 0.25, detune + 20); break;
-                case 2: playSnare(ctx, voiceOut, t, "analog", detune); break;
-                case 3: playSnare(ctx, voiceOut, t, "tight", detune + 50); break;
-                case 4: playClap(ctx, voiceOut, t, detune); break;
-                case 5: playRim(ctx, voiceOut, t, detune); break;
-                case 6: playHat(ctx, voiceOut, t, 0.05, detune); break;
-                case 7: playHat(ctx, voiceOut, t, 0.3, detune - 50); break;
-                case 8: playTom(ctx, voiceOut, t, 300, detune); break;
-                case 9: playTom(ctx, voiceOut, t, 150, detune); break;
-                case 10: playPerc(ctx, voiceOut, t, detune); break;
-                case 11: playCowbell(ctx, voiceOut, t, detune); break;
-                case 12: playCymbal(ctx, voiceOut, t, detune); break;
-                case 13: playLaser(ctx, voiceOut, t, detune); break;
-                case 14: playShaker(ctx, voiceOut, t, detune); break;
-                case 15: playVox(ctx, voiceOut, t, detune); break;
-                default: break;
+                    case 0: playTone(ctx, voiceOut, t, 55, 0.4, detune); break;
+                    case 1: playTone(ctx, voiceOut, t, 75, 0.25, detune + 20); break;
+                    case 2: playSnare(ctx, voiceOut, t, "analog", detune); break;
+                    case 3: playSnare(ctx, voiceOut, t, "tight", detune + 50); break;
+                    case 4: playClap(ctx, voiceOut, t, detune); break;
+                    case 5: playRim(ctx, voiceOut, t, detune); break;
+                    case 6: playHat(ctx, voiceOut, t, 0.05, detune); break;
+                    case 7: playHat(ctx, voiceOut, t, 0.3, detune - 50); break;
+                    case 8: playTom(ctx, voiceOut, t, 300, detune); break;
+                    case 9: playTom(ctx, voiceOut, t, 150, detune); break;
+                    case 10: playTom(ctx, voiceOut, t, 1200, detune); break;
+                    case 11: playTom(ctx, voiceOut, t, 800, detune); break;
+                    case 12: playHat(ctx, voiceOut, t, 1.0, detune); break;
+                    case 13: playLaser(ctx, voiceOut, t, detune); break;
+                    case 14: playHat(ctx, voiceOut, t, 0.05, detune); break;
+                    case 15: playTom(ctx, voiceOut, t, 440, detune); break;
                 }
 
-                // Cleanup
                 setTimeout(() => { try { voiceOut.disconnect(); } catch(e){} }, 2000);
 
                 if (!time) {
@@ -279,8 +335,7 @@
                 }
             }, [pitchShift]);
 
-            // --- Synthesizers ---
-            const playKick = (ctx, out, t, f, d, detune) => {
+            const playTone = (ctx, out, t, f, d, detune) => {
                 const osc = ctx.createOscillator();
                 const g = ctx.createGain();
                 osc.frequency.setValueAtTime(f, t);
@@ -339,17 +394,11 @@
                 g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(0.01, t+0.3);
                 osc.start(t); osc.stop(t+0.4);
             };
-            
-            const playCowbell = (ctx, out, t, detune) => { playTom(ctx, out, t, 800, detune); }; 
-            const playPerc = (ctx, out, t, detune) => { playTom(ctx, out, t, 1200, detune); };
-            const playCymbal = (ctx, out, t, detune) => { playHat(ctx, out, t, 1.0, detune); };
+
             const playLaser = (ctx, out, t, detune) => { 
                 const o = ctx.createOscillator(); o.type='sawtooth'; o.frequency.setValueAtTime(2000, t); o.frequency.exponentialRampToValueAtTime(100, t+0.2);
                 const g = ctx.createGain(); o.connect(g); g.connect(out); g.gain.exponentialRampToValueAtTime(0.01, t+0.2); o.start(t); o.stop(t+0.2);
             };
-            const playShaker = (ctx, out, t, detune) => { playHat(ctx, out, t, 0.05, detune); };
-            const playVox = (ctx, out, t, detune) => { playTom(ctx, out, t, 440, detune); }; 
-            const playRim = (ctx, out, t, detune) => { playTom(ctx, out, t, 900, detune); };
 
             const createNoiseBuffer = (ctx) => {
                 const bs = ctx.sampleRate * 2;
@@ -359,210 +408,357 @@
                 return b;
             };
 
-            // --- Sequencer Loop ---
+            // --- Sequencer Logic ---
             useEffect(() => {
                 let intervalId;
                 if (isPlaying) {
-                // Ensure audio context is running when play starts
-                if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-                    audioCtxRef.current.resume();
-                }
+                    if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
+                    startTimeRef.current = Date.now();
 
-                const stepTime = (60 * 1000) / bpm / 4;
-                intervalId = setInterval(() => {
-                    const current = stepRef.current;
-                    sequencerRef.current.forEach((track, idx) => {
-                    if (track[current]) playSound(idx);
-                    });
-                    setCurrentStep(current);
-                    stepRef.current = (current + 1) % 16;
-                }, stepTime);
+                    const stepTime = (60 * 1000) / bpm / 4;
+                    intervalId = setInterval(() => {
+                        const currentS = stepRef.current;
+                        
+                        // Determine pattern to play
+                        let patternId = playingPatternIdRef.current;
+                        
+                        // Determine current bar for display (approximate)
+                        setTotalBars(Math.floor(currentS / 16) + 1);
+                        
+                        const currentPatternGrid = patternsRef.current[patternId];
+                        
+                        // Play Sounds
+                        currentPatternGrid.forEach((track, idx) => {
+                            if (track[currentS]) playSound(idx);
+                        });
+
+                        setCurrentStep(currentS);
+                        
+                        // Update Timer
+                        const elapsed = Date.now() - startTimeRef.current;
+                        setElapsedTime(elapsed);
+
+                        // Advance Step & Handle Chaining
+                        let nextStep = currentS + 1;
+                        if (nextStep >= 16) {
+                            nextStep = 0;
+                            
+                            // Chain Logic: If end of bar, switch pattern if chained
+                            if (chainModeRef.current) {
+                                const currentIndex = PATTERN_KEYS.indexOf(patternId);
+                                const nextIndex = (currentIndex + 1) % PATTERN_KEYS.length;
+                                const nextId = PATTERN_KEYS[nextIndex];
+                                
+                                setPlayingPatternId(nextId);
+                                setActivePatternId(nextId); // Follow view to playback
+                                playingPatternIdRef.current = nextId;
+                            }
+                        }
+                        stepRef.current = nextStep;
+
+                    }, stepTime);
+                } else {
+                    stepRef.current = 0;
+                    setCurrentStep(0);
+                    setElapsedTime(0);
+                    setTotalBars(1);
+                    setPlayingPatternId('A');
+                    setActivePatternId('A');
                 }
                 return () => clearInterval(intervalId);
             }, [isPlaying, bpm, playSound]);
 
+            // --- Grid Helpers ---
             const toggleStep = (trackIndex, stepIndex) => {
                 if (!audioCtxRef.current) initAudio();
-                setSequencerGrid(prev => {
-                const newGrid = [...prev];
-                const newTrack = [...newGrid[trackIndex]];
-                newTrack[stepIndex] = !newTrack[stepIndex];
-                newGrid[trackIndex] = newTrack;
-                return newGrid;
+                setPatterns(prev => {
+                    const activeId = activePatternId;
+                    const newGrid = [...prev[activeId]];
+                    const newTrack = [...newGrid[trackIndex]];
+                    newTrack[stepIndex] = !newTrack[stepIndex];
+                    newGrid[trackIndex] = newTrack;
+                    
+                    return {
+                        ...prev,
+                        [activeId]: newGrid
+                    };
                 });
             };
 
-            const clearAll = () => {
-                if (confirm("Clear entire sequence?")) {
-                setSequencerGrid(Array(16).fill(null).map(() => Array(16).fill(false)));
+            const clearPattern = () => {
+                if(confirm(`Clear Pattern ${activePatternId}?`)) {
+                    setPatterns(prev => ({
+                        ...prev,
+                        [activePatternId]: Array(16).fill(null).map(() => Array(16).fill(false))
+                    }));
                 }
             };
 
+            const formatTime = (ms) => {
+                const totalSecs = Math.floor(ms / 1000);
+                const mins = Math.floor(totalSecs / 60);
+                const secs = totalSecs % 60;
+                const hun = Math.floor((ms % 1000) / 10);
+                return `${mins}:${secs.toString().padStart(2, '0')}:${hun.toString().padStart(2, '0')}`;
+            };
+
             return (
-                <div className="fixed inset-0 bg-zinc-950 text-zinc-100 flex flex-col font-sans select-none touch-none">
+                <div className="fixed inset-0 bg-charcoal-950 text-zinc-100 flex flex-col font-sans select-none touch-none overflow-hidden">
                 
-                {/* NAVBAR */}
-                <nav className="h-14 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-4 shrink-0 z-30 pt-safe-top">
-                    <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-zinc-100 rounded-sm flex items-center justify-center shadow-lg shadow-white/10">
-                        <Icon name="Zap" className="text-zinc-900" size={18} />
-                    </div>
-                    <div>
-                        <h1 className={`${FONT_HEADERS} text-lg tracking-tighter leading-none text-white`}>DULLAH<span className="text-zinc-500">80s</span></h1>
-                    </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-zinc-800 px-2 py-1 rounded border border-zinc-700">
-                            <Icon name="Clock" size={14} className="text-zinc-400"/>
-                            <span className="font-mono text-xs font-bold w-8 text-center">{bpm}</span>
-                            <div className="flex flex-col -space-y-1">
-                                <button onClick={() => setBpm(b=>Math.min(200, b+1))}><Icon name="ChevronUp" size={10}/></button>
-                                <button onClick={() => setBpm(b=>Math.max(60, b-1))}><Icon name="ChevronDown" size={10}/></button>
+                    {/* NAVBAR */}
+                    <nav className="h-14 bg-charcoal-900 border-b border-charcoal-800 flex items-center justify-between px-4 shrink-0 z-30 pt-safe-top">
+                        <div className="flex items-center gap-3 h-full">
+                            <div className="w-8 h-8 bg-gradient-to-br from-slate-400 to-cyan-400 rounded flex items-center justify-center shadow-lg shadow-cyan-900/20">
+                                <Icon name="Zap" className="text-charcoal-950" size={18} />
+                            </div>
+                            <div className="flex flex-col justify-center h-full">
+                                <h1 className="font-extrabold text-lg tracking-tight leading-none text-white">
+                                    DULLAH<span className="text-cyan-400">80s</span>
+                                </h1>
+                                <span className="text-[9px] text-slate-400 tracking-wider font-medium uppercase mt-0.5">Drum Synthesizer</span>
                             </div>
                         </div>
-                        <button onClick={() => setShowFx(!showFx)} className={`p-2 rounded hover:bg-zinc-800 ${showFx ? 'text-white' : 'text-zinc-400'}`}>
-                            <Icon name="Settings" size={20} />
-                        </button>
-                    </div>
-                </nav>
-
-                {/* MAIN CONTENT AREA */}
-                <div className="flex-1 flex flex-col overflow-hidden relative">
-                    
-                    {/* FX PANEL OVERLAY */}
-                    {showFx && (
-                        <div className="absolute inset-0 z-40 bg-zinc-950/95 backdrop-blur-sm flex flex-col p-6 gap-6 animate-in fade-in duration-200 pt-safe-top">
-                            <div className="flex justify-between items-center border-b border-zinc-800 pb-4 mt-8">
-                                <h2 className={`${FONT_HEADERS} text-xl`}>Audio Settings</h2>
-                                <button onClick={() => setShowFx(false)} className="text-zinc-400">Close</button>
+                        
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 bg-charcoal-800/50 px-3 py-1.5 rounded-lg border border-charcoal-700/50">
+                                <Icon name="Clock" size={14} className="text-slate-400"/>
+                                <span className="font-mono text-sm font-bold w-8 text-center text-white">{bpm}</span>
+                                <div className="flex flex-col -space-y-0.5">
+                                    <button onClick={() => setBpm(b=>Math.min(200, b+1))} className="text-slate-400 hover:text-cyan-400"><Icon name="ChevronUp" size={12}/></button>
+                                    <button onClick={() => setBpm(b=>Math.max(60, b-1))} className="text-slate-400 hover:text-cyan-400"><Icon name="ChevronDown" size={12}/></button>
+                                </div>
                             </div>
-                            <div className="space-y-6">
-                                {[
-                                    { label: "Master Volume", icon: "Volume2", val: volume, set: setVolume, min:0, max:1 },
-                                    { label: "Saturation", icon: "Activity", val: drive, set: setDrive, min:0, max:0.5 },
-                                    { label: "Reverb Send", icon: "Sliders", val: reverbLevel, set: setReverbLevel, min:0, max:0.8 },
-                                    { label: "Global Pitch", icon: "Music", val: pitchShift, set: setPitchShift, min:-0.5, max:0.5, step: 0.05 },
-                                ].map((fx, i) => (
-                                    <div key={i}>
-                                        <div className="flex justify-between mb-2">
-                                            <label className={`${FONT_HEADERS} text-xs text-zinc-400 flex items-center gap-2`}>
-                                                <Icon name={fx.icon} size={14}/> {fx.label}
-                                            </label>
-                                            <span className="font-mono text-xs">{fx.val.toFixed(2)}</span>
+                            <button 
+                                onClick={() => setShowFx(!showFx)} 
+                                className={`p-2 rounded-lg transition-all ${showFx ? 'bg-cyan-400 text-charcoal-950' : 'bg-charcoal-800/50 text-slate-400 hover:text-white border border-charcoal-700/50'}`}
+                            >
+                                <Icon name="Settings" size={20} />
+                            </button>
+                        </div>
+                    </nav>
+
+                    {/* LIQUID GLASS SETTINGS OVERLAY */}
+                    {showFx && (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowFx(false)}></div>
+                            <div className="w-full max-w-sm rounded-2xl liquid-glass overflow-hidden flex flex-col max-h-[80vh] relative z-10">
+                                <div className="flex justify-between items-center p-5 border-b border-glass-border">
+                                    <h2 className="font-bold text-lg text-white tracking-wide">Audio Settings</h2>
+                                    <button onClick={() => setShowFx(false)} className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+                                <div className="p-6 space-y-8 overflow-y-auto">
+                                    {[
+                                        { label: "Master Volume", icon: "Volume2", val: volume, set: setVolume, min:0, max:1 },
+                                        { label: "Saturation Drive", icon: "Activity", val: drive, set: setDrive, min:0, max:0.5 },
+                                        { label: "Reverb Level", icon: "Sliders", val: reverbLevel, set: setReverbLevel, min:0, max:0.8 },
+                                        { label: "Global Pitch", icon: "Music", val: pitchShift, set: setPitchShift, min:-0.5, max:0.5, step: 0.05 },
+                                    ].map((fx, i) => (
+                                        <div key={i} className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <label className="font-semibold text-sm text-slate-200 flex items-center gap-2">
+                                                    <Icon name={fx.icon} size={16} className="text-cyan-400"/> 
+                                                    {fx.label}
+                                                </label>
+                                                <span className="font-mono text-xs text-cyan-400 bg-cyan-950/30 px-2 py-0.5 rounded border border-cyan-900/50">
+                                                    {(fx.val * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
+                                            <input 
+                                                type="range" min={fx.min} max={fx.max} step={fx.step || 0.01} 
+                                                value={fx.val} 
+                                                onChange={e=>fx.set(parseFloat(e.target.value))} 
+                                                className="w-full"
+                                            />
                                         </div>
-                                        <input type="range" min={fx.min} max={fx.max} step={fx.step || 0.01} value={fx.val} onChange={e=>fx.set(parseFloat(e.target.value))} className="w-full h-2 bg-zinc-800 rounded-full appearance-none accent-white cursor-pointer"/>
+                                    ))}
+                                    <div className="pt-4 border-t border-glass-border">
+                                        <button onClick={clearPattern} className="w-full py-3 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-colors flex items-center justify-center gap-2">
+                                            <Icon name="Trash2" size={16} /> Clear Current Pattern
+                                        </button>
                                     </div>
-                                ))}
-                                <button onClick={clearAll} className="flex items-center gap-2 text-red-500 text-xs font-bold uppercase mt-4 border border-red-900/50 p-3 rounded justify-center hover:bg-red-900/20 w-full">
-                                    <Icon name="Trash2" size={14} /> Clear All Patterns
-                                </button>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* PADS SECTION */}
-                    <div className={`transition-all duration-300 ease-in-out flex-shrink-0 bg-zinc-925 border-b border-zinc-800 flex flex-col ${collapsedPads ? 'h-12' : 'h-[45vh] md:h-[50vh]'}`}>
-                        <div className="flex justify-between items-center px-4 h-12 shrink-0 bg-zinc-900">
-                            <span className={`${FONT_HEADERS} text-xs text-zinc-500 tracking-widest`}>PERFORMANCE PADS</span>
-                            <button onClick={() => setCollapsedPads(!collapsedPads)} className="text-zinc-500 hover:text-white">
-                                <Icon name={collapsedPads ? "ChevronDown" : "ChevronUp"} size={16} />
-                            </button>
-                        </div>
+                    {/* MAIN WORKSPACE */}
+                    <div className="flex-1 flex flex-col overflow-hidden relative">
                         
-                        <div className={`flex-1 p-4 flex items-center justify-center ${collapsedPads ? 'hidden' : 'flex'}`}>
-                        <div className="grid grid-cols-4 gap-2 md:gap-4 w-full h-full max-w-lg max-h-lg">
-                            {PAD_NAMES.map((name, i) => (
-                                <button
-                                key={i}
-                                onPointerDown={(e) => {
-                                    e.target.releasePointerCapture(e.pointerId);
-                                    playSound(i); 
-                                }}
-                                className={`
-                                    relative rounded md:rounded-lg flex flex-col items-center justify-center touch-manipulation transition-all active:scale-95 active:brightness-110
-                                    ${activePad === i ? ACTIVE_COLOR : INACTIVE_PAD}
-                                `}
+                        {/* PADS */}
+                        <div className={`transition-all duration-300 ease-out bg-charcoal-900 border-b border-charcoal-800 flex flex-col ${collapsedPads ? 'h-10' : 'h-[38vh] min-h-[220px]'}`}>
+                            <div 
+                                className="flex justify-between items-center px-4 h-10 shrink-0 bg-charcoal-900/90 hover:bg-charcoal-800 cursor-pointer border-b border-charcoal-800/50"
+                                onClick={() => setCollapsedPads(!collapsedPads)}
+                            >
+                                <span className="font-semibold text-[10px] text-slate-500 tracking-widest uppercase">Performance Pads</span>
+                                <Icon name={collapsedPads ? "ChevronDown" : "ChevronUp"} size={16} className="text-slate-500" />
+                            </div>
+                            
+                            <div className={`flex-1 p-3 flex items-center justify-center ${collapsedPads ? 'hidden' : 'flex'}`}>
+                                <div className="grid grid-cols-4 gap-2 w-full h-full max-w-md">
+                                    {PAD_NAMES.map((name, i) => (
+                                        <button
+                                            key={i}
+                                            onPointerDown={(e) => {
+                                                e.target.releasePointerCapture(e.pointerId);
+                                                playSound(i); 
+                                            }}
+                                            className={`
+                                                relative rounded-lg flex flex-col items-center justify-center touch-manipulation transition-all duration-100
+                                                border select-none
+                                                ${activePad === i 
+                                                    ? 'bg-cyan-500 border-cyan-400 text-black pad-active font-bold' 
+                                                    : 'bg-charcoal-800 border-charcoal-700 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+                                                }
+                                            `}
+                                        >
+                                            <span className="text-[10px] md:text-xs text-center leading-tight tracking-wide pointer-events-none">
+                                                {name.split(" ")[0]}<br/>{name.split(" ")[1] || ""}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* NEW BAR: PLAYBACK INFO & PATTERN CHAIN */}
+                        <div className="h-12 bg-charcoal-950 border-b border-charcoal-800 flex items-center justify-between px-2 shrink-0">
+                            {/* Counter */}
+                            <div className="flex items-center gap-3 px-2">
+                                <div className="font-mono text-xs text-cyan-400">
+                                    {formatTime(elapsedTime)}
+                                </div>
+                                <div className="h-4 w-px bg-charcoal-800"></div>
+                                <div className="font-mono text-xs text-slate-400">
+                                    BAR <span className="text-white">{totalBars}.{Math.floor(currentStep/4)+1}</span>
+                                </div>
+                            </div>
+
+                            {/* Patterns */}
+                            <div className="flex items-center gap-1">
+                                <button 
+                                    onClick={() => setChainMode(!chainMode)}
+                                    className={`h-7 px-2 rounded flex items-center justify-center border transition-all mr-2 ${chainMode ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400' : 'border-transparent text-slate-600'}`}
                                 >
-                                <span className={`font-inter font-bold text-[10px] md:text-xs text-center leading-none ${activePad === i ? 'text-black' : 'text-zinc-500'}`}>
-                                    {name.split(" ")[0]}<br/>{name.split(" ")[1] || ""}
-                                </span>
+                                    <Icon name="Repeat" size={14} />
                                 </button>
-                            ))}
-                        </div>
-                        </div>
-                    </div>
-
-                    {/* TRANSPORT */}
-                    <div className="h-14 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-4 shrink-0">
-                    <button 
-                            onClick={() => { if(!audioCtxRef.current) initAudio(); setIsPlaying(!isPlaying); }}
-                            className={`flex items-center gap-2 px-6 py-2 rounded-sm font-bold uppercase text-xs tracking-wider transition-colors ${isPlaying ? 'bg-white text-black' : 'bg-zinc-800 text-white'}`}
-                    >
-                            <Icon name={isPlaying ? "Square" : "Play"} size={14} className="fill-current" />
-                            {isPlaying ? 'STOP' : 'PLAY'}
-                    </button>
-                    
-                    <div className="flex gap-1">
-                        {[0,1,2,3].map(beat => (
-                            <div key={beat} className={`w-2 h-2 rounded-full ${Math.floor(currentStep/4) === beat && isPlaying ? 'bg-red-500 shadow-[0_0_8px_red]' : 'bg-zinc-800'}`}></div>
-                        ))}
-                    </div>
-                    </div>
-
-                    {/* SEQUENCER */}
-                    <div className="flex-1 overflow-hidden bg-zinc-950 relative flex flex-col">
-                        <div className="flex items-center h-6 border-b border-zinc-800 bg-zinc-900 shrink-0 overflow-hidden">
-                        <div className="w-24 shrink-0 border-r border-zinc-800 bg-zinc-900 z-20"></div> 
-                        <div className="flex-1 overflow-hidden relative">
-                            <div className="flex w-full">
-                                {Array(16).fill(0).map((_, i) => (
-                                    <div key={i} className="flex-1 text-[9px] text-zinc-600 text-center font-mono border-r border-zinc-800/30">
-                                        {i+1}
-                                    </div>
+                                {PATTERN_KEYS.map(pid => (
+                                    <button
+                                        key={pid}
+                                        onClick={() => { setActivePatternId(pid); if(!chainMode && !isPlaying) setPlayingPatternId(pid); }}
+                                        className={`
+                                            w-7 h-7 rounded text-[10px] font-bold border transition-all
+                                            ${activePatternId === pid 
+                                                ? 'bg-slate-700 border-slate-500 text-white' 
+                                                : 'bg-charcoal-900 border-charcoal-800 text-slate-600'
+                                            }
+                                            ${playingPatternId === pid && isPlaying ? 'ring-1 ring-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]' : ''}
+                                        `}
+                                    >
+                                        {pid}
+                                    </button>
                                 ))}
                             </div>
                         </div>
+
+                        {/* TRANSPORT */}
+                        <div className="h-16 bg-charcoal-900 border-b border-charcoal-800 flex items-center justify-between px-4 shrink-0">
+                            <button 
+                                onClick={() => { if(!audioCtxRef.current) initAudio(); setIsPlaying(!isPlaying); }}
+                                className={`
+                                    flex items-center gap-3 px-8 py-3 rounded-lg font-bold uppercase text-xs tracking-widest transition-all 
+                                    ${isPlaying 
+                                        ? 'bg-cyan-400 text-charcoal-950 shadow-[0_0_20px_rgba(34,211,238,0.4)]' 
+                                        : 'bg-charcoal-800 text-slate-200 border border-charcoal-700 hover:bg-charcoal-700'
+                                    }
+                                `}
+                            >
+                                <Icon name={isPlaying ? "Square" : "Play"} size={14} className={isPlaying ? "fill-current" : ""} />
+                                {isPlaying ? 'Stop' : 'Play'}
+                            </button>
+                            
+                            {/* Step Indicator (Visual) */}
+                            <div className="flex gap-1.5">
+                                {[0,1,2,3].map(beat => (
+                                    <div 
+                                        key={beat} 
+                                        className={`
+                                            w-3 h-3 rounded-full transition-all duration-100
+                                            ${Math.floor(currentStep/4) === beat && isPlaying 
+                                                ? 'bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)] scale-110' 
+                                                : 'bg-charcoal-800'
+                                            }
+                                        `}
+                                    ></div>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-safe-bottom"> 
-                            {PAD_NAMES.map((trackName, trackIndex) => (
-                                <div key={trackIndex} className="flex items-stretch h-12 border-b border-zinc-800/50">
-                                    
-                                    <div className="w-24 shrink-0 bg-zinc-900 border-r border-zinc-800 flex items-center px-3 sticky left-0 z-10 shadow-[4px_0_10px_rgba(0,0,0,0.2)]">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-zinc-300 uppercase truncate w-20">{trackName}</span>
-                                            <div className="flex gap-0.5 mt-1">
-                                                <div className={`w-1 h-1 rounded-full ${sequencerGrid[trackIndex].some(s=>s) ? 'bg-green-500' : 'bg-zinc-800'}`}></div>
+                        {/* SEQUENCER GRID */}
+                        <div className="flex-1 overflow-hidden bg-charcoal-950 relative flex flex-col">
+                            {/* Sticky Header */}
+                            <div className="flex items-center h-8 border-b border-charcoal-800 bg-charcoal-900 shrink-0 z-20">
+                                <div className="w-24 shrink-0 border-r border-charcoal-800 bg-charcoal-900"></div> 
+                                <div className="flex-1 flex pr-safe-right">
+                                    {Array(16).fill(0).map((_, i) => (
+                                        <div 
+                                            key={i} 
+                                            className={`grid-col-width flex items-center justify-center text-[9px] font-mono border-r border-charcoal-800/30 ${i % 4 === 0 ? 'text-cyan-400 font-bold bg-cyan-900/10' : 'text-slate-600'}`}
+                                        >
+                                            {i+1}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Scrollable Tracks */}
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden pb-safe-bottom custom-scrollbar"> 
+                                {PAD_NAMES.map((trackName, trackIndex) => (
+                                    <div key={trackIndex} className="flex items-stretch h-12 border-b border-charcoal-800/50 hover:bg-charcoal-900/20">
+                                        
+                                        {/* Track Name */}
+                                        <div className="w-24 shrink-0 bg-charcoal-900 border-r border-charcoal-800 flex items-center px-3 shadow-[2px_0_5px_rgba(0,0,0,0.2)] z-10">
+                                            <div className="flex flex-col w-full truncate">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">{trackName}</span>
+                                                <div className="flex gap-0.5 mt-0.5 h-1">
+                                                     {patterns[activePatternId][trackIndex].some(s=>s) && <div className="w-full h-full bg-cyan-500/50 rounded-full"></div>}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="flex-1 flex overflow-x-auto hide-scroll touch-pan-x">
-                                        {sequencerGrid[trackIndex].map((isActive, stepIndex) => (
-                                            <button
-                                                key={stepIndex}
-                                                onClick={() => toggleStep(trackIndex, stepIndex)}
-                                                className={`
-                                                    flex-1 min-w-[8%] md:min-w-[6%] relative border-r border-zinc-800/30 flex items-center justify-center group
-                                                    ${isActive ? STEP_ACTIVE : STEP_INACTIVE}
-                                                    ${stepIndex % 4 === 0 ? 'border-l border-l-zinc-700/50' : ''}
-                                                `}
-                                            >
-                                                {isActive && <div className="w-3 h-3 md:w-4 md:h-4 bg-zinc-900 rounded-sm"></div>}
-                                                {currentStep === stepIndex && (
-                                                    <div className="absolute inset-0 bg-zinc-500/20 border-l border-white pointer-events-none"></div>
-                                                )}
-                                            </button>
-                                        ))}
+                                        {/* Grid Cells */}
+                                        <div className="flex-1 flex">
+                                            {patterns[activePatternId][trackIndex].map((isActive, stepIndex) => (
+                                                <button
+                                                    key={stepIndex}
+                                                    onClick={() => toggleStep(trackIndex, stepIndex)}
+                                                    className={`
+                                                        grid-col-width relative border-r border-charcoal-800/30 flex items-center justify-center group outline-none
+                                                        ${stepIndex % 4 === 0 ? 'bg-white/5' : ''}
+                                                    `}
+                                                >
+                                                    {/* The Cell */}
+                                                    <div className={`
+                                                        w-full h-full m-[1px] rounded-[1px] transition-all duration-75
+                                                        ${isActive ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.4)]' : 'hover:bg-white/5'}
+                                                    `}></div>
+
+                                                    {/* Playhead Overlay */}
+                                                    {currentStep === stepIndex && (
+                                                        <div className="absolute inset-0 bg-white/10 border-l border-white/40 pointer-events-none z-10"></div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                            <div className="h-20"></div>
+                                ))}
+                                <div className="h-24"></div> 
+                            </div>
                         </div>
-                    </div>
 
-                </div>
+                    </div>
                 </div>
             );
         }
@@ -572,3 +768,5 @@
     </script>
 </body>
 </html>
+
+
